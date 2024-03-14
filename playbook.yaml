@@ -1,0 +1,41 @@
+- name: Install packages
+  hosts: localhost
+  become: true
+  become_method: ansible.builtin.sudo
+  tasks:
+    - name: Uninstall unwanted apps
+      ansible.builtin.dnf:
+        name:
+          - abrt
+          - gnome-calendar
+          - gnome-contacts
+          - gnome-maps
+          - gnome-tour
+          - gnome-weather
+        state: absent
+        autoremove: yes
+    - name: Upgrade packages
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+    - name: Install the 'Development tools' package group
+      ansible.builtin.dnf:
+        name: "@Development tools"
+        state: present
+    - name: Install apps
+      ansible.builtin.dnf:
+        name:
+          - gnome-shell-extension-appindicator
+          - gnome-shell-extension-auto-move-windows
+          - gnome-shell-extension-blur-my-shell
+          - gnome-shell-extension-dash-to-dock
+          - lutris
+          - remmina
+          - remmina-plugins-rdp
+          - remmina-plugins-vnc
+          - rhythmbox
+          - siril
+          - stellarium
+          - thunderbird
+          - vlc
+        state: latest
