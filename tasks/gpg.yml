@@ -1,0 +1,13 @@
+- name: Init GPG
+  shell: "gpg -k"
+- name: Get GPG hardened configuration
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/drduh/config/master/gpg.conf
+    dest: /home/adrien/.gnupg/gpg.conf
+    owner: adrien
+- name: Create scdaemon conf file
+  ansible.builtin.file:
+    path: /home/adrien/.gnupg/scdaemon.conf
+    owner: adrien
+    group: adrien
+    state: touch

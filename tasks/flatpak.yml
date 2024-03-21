@@ -1,0 +1,6 @@
+- name: Install Flatpak packages
+  community.general.flatpak:
+    name:
+      - org.signal.Signal
+      - com.spotify.Client
+    state: present

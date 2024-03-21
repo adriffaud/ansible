@@ -1,0 +1,206 @@
+- name: Install packages
+  hosts: localhost
+  become: true
+  become_method: ansible.builtin.sudo
+  roles:
+    - role: PeterMosmans.customize-gnome
+  vars:
+    customize_gnome__skip_restart_gnome_shell: false
+    gnome_user: adrien
+    # gnome_extensions:
+    #   - id: 1460
+    #     enabled: true
+    #   - id: 615
+    #     enabled: true
+    #   - id: 16
+    #     enabled: true
+    #   - id: 3193
+    #     enabled: true
+    #   - id: 307
+    #     enabled: true
+    #   - id: 5410
+    #     enabled: true
+    #   - id: 2236
+    #     enabled: true
+    #   - id: 5090
+    #     enabled: true
+    gnome_dconf:
+      - key: /org/gnome/mutter/dynamic-workspaces
+        value: false
+    gnome_gsettings:
+      # - schema: org.gnome.desktop.wm.preferences
+      #   key: resize-with-right-button
+      #   value: true
+      - schema: org.gnome.shell.keybindings
+        key: switch-to-application-1
+        value: []
+      - schema: org.gnome.shell.keybindings
+        key: switch-to-application-2
+        value: []
+      - schema: org.gnome.shell.keybindings
+        key: switch-to-application-3
+        value: []
+      - schema: org.gnome.shell.keybindings
+        key: switch-to-application-4
+        value: []
+      - schema: org.gnome.shell.keybindings
+        key: switch-to-application-5
+        value: []
+      - schema: org.gnome.shell.keybindings
+        key: switch-to-application-6
+        value: []
+      - schema: org.gnome.shell.keybindings
+        key: switch-to-application-7
+        value: []
+      - schema: org.gnome.shell.keybindings
+        key: switch-to-application-8
+        value: []
+      - schema: org.gnome.shell.keybindings
+        key: switch-to-application-9
+        value: []
+  tasks:
+    - name: Uninstall unwanted apps
+      ansible.builtin.dnf:
+        name:
+          - abrt
+          - gnome-calendar
+          - gnome-contacts
+          - gnome-maps
+          - gnome-tour
+          - gnome-weather
+        state: absent
+        autoremove: yes
+    - name: Install GPG keys
+      ansible.builtin.dnf:
+        name: distribution-gpg-keys
+        state: latest
+    - name: Import RPM Fusion free key
+      ansible.builtin.rpm_key:
+        key: /usr/share/distribution-gpg-keys/rpmfusion/RPM-GPG-KEY-rpmfusion-free-fedora-{{ansible_distribution_major_version}}
+        fingerprint: E9A4 91A3 DE24 7814 E7E0 67EA E06F 8ECD D651 FF2E
+    - name: Import RPM Fusion non free key
+      ansible.builtin.rpm_key:
+        key: /usr/share/distribution-gpg-keys/rpmfusion/RPM-GPG-KEY-rpmfusion-nonfree-fedora-{{ansible_distribution_major_version}}
+        fingerprint: 79BD B88F 9BBF 7391 0FD4 095B 6A2A F961 9484 3C65
+    - name: Enable the RPM Fusion repository
+      ansible.builtin.dnf:
+        name:
+          - "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ansible_distribution_major_version}}.noarch.rpm"
+          - "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ansible_distribution_major_version}}.noarch.rpm"
+        state: present
+    - name: Upgrade packages
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+    - name: Install the 'Development tools' package group
+      ansible.builtin.dnf:
+        name: "@Development tools"
+        state: present
+    - name: Install apps
+      ansible.builtin.dnf:
+        name:
+          - bat
+          - cargo
+          - croc
+          - eza
+          - fzf
+          - gnome-tweaks
+          - kitty
+          - lutris
+          - mpv
+          - neovim
+          - remmina
+          - remmina-plugins-rdp
+          - remmina-plugins-vnc
+          - rhythmbox
+          - rust
+          - siril
+          - steam
+          - stellarium
+          - syncthing
+          - thunderbird
+          - vim
+          - vlc
+          - zsh
+        state: latest
+    - name: Install Firefox profile switcher
+      ansible.builtin.dnf:
+        name: https://github.com/null-dev/firefox-profile-switcher-connector/releases/latest/download/linux-x64.rpm
+        disable_gpg_check: true
+        state: present
+    - name: Enable Syncthing
+      become: false
+      ansible.builtin.systemd_service:
+        name: syncthing
+        enabled: true
+        scope: user
+        state: started
+    # - name: Install Slack
+    #   ansible.builtin.dnf:
+    #     name: https://downloads.slack-edge.com/releases/linux/4.36.140/prod/x64/slack-4.36.140-0.1.el8.x86_64.rpm
+    #     disable_gpg_check: true
+    #     state: present
+    - name: Install nvidia drivers
+      ansible.builtin.dnf:
+        name:
+          - akmod-nvidia
+          - xorg-x11-drv-nvidia-cuda
+        state: present
+    - name: Set ZSH shell
+      ansible.builtin.user:
+        name: adrien
+        shell: /usr/bin/zsh
+    - name: Add vscode repository
+      ansible.builtin.yum_repository:
+        enabled: true
+        name: vscode
+        description: Visual Studio Code
+        baseurl: https://packages.microsoft.com/yumrepos/vscode
+        gpgcheck: true
+        gpgkey:
+          - https://packages.microsoft.com/keys/microsoft.asc
+    - name: Install vscode
+      ansible.builtin.dnf:
+        name: code
+        state: present
+    - name: Add mise repo
+      ansible.builtin.yum_repository:
+        name: mise
+        description: mise repo
+        baseurl: https://mise.jdx.dev/rpm
+        enabled: true
+        gpgcheck: true
+        gpgkey: https://mise.jdx.dev/gpg-key.pub
+    - name: Install mise
+      ansible.builtin.dnf:
+        name: mise
+        state: present
+    - name: Enable Starship COPR
+      community.general.copr:
+        host: copr.fedorainfracloud.org
+        state: enabled
+        name: atim/starship
+    - name: Install Starship
+      ansible.builtin.dnf:
+        name: starship
+        state: present
+    - ansible.builtin.include_tasks: tasks/1password.yml
+    - ansible.builtin.include_tasks: tasks/tailscale.yml
+    - name: Add chezmoi mise plugin
+      ansible.builtin.command: mise plugins add chezmoi -y
+    - name: Install chezmoi
+      ansible.builtin.command: mise use -g chezmoi@latest -y
+    # - name: Setup dotfiles
+    #   ansible.builtin.command: mise exec chezmoi@latest -- init --apply https://github.com/adriffaud/dotfiles.git
+    - ansible.builtin.include_tasks: tasks/fonts.yml
+    - ansible.builtin.include_tasks: tasks/gpg.yml
+    - ansible.builtin.include_tasks: tasks/flatpak.yml
+    - name: Add wezterm copr repo
+      community.general.copr:
+        host: copr.fedorainfracloud.org
+        state: enabled
+        name: wezfurlong/wezterm-nightly
+    - name: Install wezterm
+      ansible.builtin.dnf:
+        name: wezterm
+        state: present
