@@ -2,72 +2,11 @@
   hosts: localhost
   become: true
   become_method: ansible.builtin.sudo
-  roles:
-    - role: PeterMosmans.customize-gnome
-  vars:
-    customize_gnome__skip_restart_gnome_shell: false
-    gnome_user: adrien
-    # gnome_extensions:
-    #   - id: 1460
-    #     enabled: true
-    #   - id: 615
-    #     enabled: true
-    #   - id: 16
-    #     enabled: true
-    #   - id: 3193
-    #     enabled: true
-    #   - id: 307
-    #     enabled: true
-    #   - id: 5410
-    #     enabled: true
-    #   - id: 2236
-    #     enabled: true
-    #   - id: 5090
-    #     enabled: true
-    gnome_dconf:
-      - key: /org/gnome/mutter/dynamic-workspaces
-        value: false
-    gnome_gsettings:
-      # - schema: org.gnome.desktop.wm.preferences
-      #   key: resize-with-right-button
-      #   value: true
-      - schema: org.gnome.shell.keybindings
-        key: switch-to-application-1
-        value: []
-      - schema: org.gnome.shell.keybindings
-        key: switch-to-application-2
-        value: []
-      - schema: org.gnome.shell.keybindings
-        key: switch-to-application-3
-        value: []
-      - schema: org.gnome.shell.keybindings
-        key: switch-to-application-4
-        value: []
-      - schema: org.gnome.shell.keybindings
-        key: switch-to-application-5
-        value: []
-      - schema: org.gnome.shell.keybindings
-        key: switch-to-application-6
-        value: []
-      - schema: org.gnome.shell.keybindings
-        key: switch-to-application-7
-        value: []
-      - schema: org.gnome.shell.keybindings
-        key: switch-to-application-8
-        value: []
-      - schema: org.gnome.shell.keybindings
-        key: switch-to-application-9
-        value: []
   tasks:
     - name: Uninstall unwanted apps
       ansible.builtin.dnf:
         name:
           - abrt
-          - gnome-calendar
-          - gnome-contacts
-          - gnome-maps
-          - gnome-tour
-          - gnome-weather
         state: absent
         autoremove: yes
     - name: Install GPG keys
@@ -103,31 +42,16 @@
           - cargo
           - croc
           - eza
+          - fish
           - fzf
-          - gnome-tweaks
-          - kitty
-          - lutris
           - mpv
           - neovim
-          - remmina
-          - remmina-plugins-rdp
-          - remmina-plugins-vnc
-          - rhythmbox
           - rust
-          - siril
-          - steam
-          - stellarium
           - syncthing
           - thunderbird
           - vim
           - vlc
-          - zsh
         state: latest
-    - name: Install Firefox profile switcher
-      ansible.builtin.dnf:
-        name: https://github.com/null-dev/firefox-profile-switcher-connector/releases/latest/download/linux-x64.rpm
-        disable_gpg_check: true
-        state: present
     - name: Enable Syncthing
       become: false
       ansible.builtin.systemd_service:
@@ -140,16 +64,10 @@
     #     name: https://downloads.slack-edge.com/releases/linux/4.36.140/prod/x64/slack-4.36.140-0.1.el8.x86_64.rpm
     #     disable_gpg_check: true
     #     state: present
-    - name: Install nvidia drivers
-      ansible.builtin.dnf:
-        name:
-          - akmod-nvidia
-          - xorg-x11-drv-nvidia-cuda
-        state: present
-    - name: Set ZSH shell
+    - name: Set Fish shell
       ansible.builtin.user:
         name: adrien
-        shell: /usr/bin/zsh
+        shell: /usr/bin/fish
     - name: Add vscode repository
       ansible.builtin.yum_repository:
         enabled: true
@@ -184,8 +102,6 @@
       ansible.builtin.dnf:
         name: starship
         state: present
-    - ansible.builtin.include_tasks: tasks/1password.yml
-    - ansible.builtin.include_tasks: tasks/tailscale.yml
     - name: Add chezmoi mise plugin
       ansible.builtin.command: mise plugins add chezmoi -y
     - name: Install chezmoi
@@ -194,7 +110,7 @@
     #   ansible.builtin.command: mise exec chezmoi@latest -- init --apply https://github.com/adriffaud/dotfiles.git
     - ansible.builtin.include_tasks: tasks/fonts.yml
     - ansible.builtin.include_tasks: tasks/gpg.yml
-    - ansible.builtin.include_tasks: tasks/flatpak.yml
+    # - ansible.builtin.include_tasks: tasks/flatpak.yml
     - name: Add wezterm copr repo
       community.general.copr:
         host: copr.fedorainfracloud.org
